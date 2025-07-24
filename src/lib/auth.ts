@@ -7,6 +7,10 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+  },
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
@@ -17,7 +21,9 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      prompt: 'select_account',
     },
   },
+  trustedOrigins: ['http://localhost:3000'],
   plugins: [nextCookies()],
 });
