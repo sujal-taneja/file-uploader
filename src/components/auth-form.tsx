@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { redirect } from 'next/navigation';
 
 interface AuthFormProps {
   formType: 'login' | 'signup';
@@ -31,8 +33,30 @@ export function AuthForm({ formType }: AuthFormProps) {
     event.preventDefault();
     setIsLoading(true);
 
-    console.log({ name, email, password });
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (isSignup) {
+      const { data, error } = await authClient.signUp.email({
+        name,
+        email,
+        password,
+      });
+
+      if (data) redirect('/');
+
+      if (error) toast.error(error.message);
+    } else {
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
+      });
+
+      if (data) redirect('/');
+
+      if (error) toast.error(error.message);
+    }
+
+    const session = await authClient.getSession();
+    console.log('session', session);
+
     setIsLoading(false);
   };
 
@@ -98,13 +122,18 @@ export function AuthForm({ formType }: AuthFormProps) {
             </div>
             <div className="flex flex-col gap-3">
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {submitButtonText}
+                {isLoading ? (
+                  <Loader2 className="animate-spin" size={24} />
+                ) : (
+                  submitButtonText
+                )}
               </Button>
               <Button
                 variant="outline"
                 type="button"
                 className="w-full"
                 onClick={handleGoogleSignIn}
+                disabled={isLoading}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
