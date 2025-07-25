@@ -15,23 +15,26 @@ import {
 } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface AuthFormProps {
   formType: 'login' | 'signup';
 }
 
 export function AuthForm({ formType }: AuthFormProps) {
+  const router = useRouter();
+
   const isSignup = formType === 'signup';
 
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isInfoLoading, setIsInfoLoading] = React.useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoading(true);
+    setIsInfoLoading(true);
 
     if (isSignup) {
       const { data, error } = await authClient.signUp.email({
@@ -40,30 +43,43 @@ export function AuthForm({ formType }: AuthFormProps) {
         password,
       });
 
-      if (data) redirect('/');
+      if (data) toast.success('User signed up. Verify your email to log in.');
 
-      if (error) toast.error(error.message);
+      if (error) toast.error(error.message || 'Internal server error');
     } else {
       const { data, error } = await authClient.signIn.email({
         email,
         password,
       });
 
-      if (data) redirect('/');
+      if (data) toast.success('User signed in');
 
-      if (error) toast.error(error.message);
+      if (error) {
+        if (error.code === 'EMAIL_NOT_VERIFIED') {
+          toast.error('Verify your email to sign in');
+        } else {
+          toast.error(error.message || 'Internal server error');
+        }
+      }
     }
 
     const session = await authClient.getSession();
+
     console.log('session', session);
 
-    setIsLoading(false);
+    setIsInfoLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
-    await authClient.signIn.social({
+    setIsGoogleLoading(true);
+
+    const { error } = await authClient.signIn.social({
       provider: 'google',
     });
+
+    if (error) toast.error(error.message || 'Internal server error');
+
+    setIsGoogleLoading(false);
   };
 
   const title = isSignup ? 'Get started' : 'Welcome back';
@@ -110,7 +126,17 @@ export function AuthForm({ formType }: AuthFormProps) {
               />
             </div>
             <div className="grid gap-3">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center">
+                <Label htmlFor="password">Password</Label>
+                {!isSignup && (
+                  <a
+                    href="#"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </a>
+                )}
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -121,8 +147,12 @@ export function AuthForm({ formType }: AuthFormProps) {
               />
             </div>
             <div className="flex flex-col gap-3">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isInfoLoading || isGoogleLoading}
+              >
+                {isInfoLoading ? (
                   <Loader2 className="animate-spin" size={24} />
                 ) : (
                   submitButtonText
@@ -133,7 +163,7 @@ export function AuthForm({ formType }: AuthFormProps) {
                 type="button"
                 className="w-full"
                 onClick={handleGoogleSignIn}
-                disabled={isLoading}
+                disabled={isInfoLoading || isGoogleLoading}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
