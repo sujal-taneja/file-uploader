@@ -15,18 +15,14 @@ interface sendEmailType {
 
 export async function sendEmail({ email, url, type }: sendEmailType) {
   try {
-    console.log(email, url, type);
-
     const { data, error } = await resend.emails.send({
-      from: 'Suzie <file-uploader>',
+      from: 'Suzie <me@suziemaster.me>',
       to: email,
       subject:
         type === emailType.verification ? 'Verify your email address' : '',
       react:
         type === emailType.verification ? SendVerificationEmail({ url }) : null,
     });
-
-    console.log(data, error);
 
     if (error) {
       console.log(error);

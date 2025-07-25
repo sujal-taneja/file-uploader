@@ -63,10 +63,6 @@ export function AuthForm({ formType }: AuthFormProps) {
       }
     }
 
-    const session = await authClient.getSession();
-
-    console.log('session', session);
-
     setIsInfoLoading(false);
   };
 

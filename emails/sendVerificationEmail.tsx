@@ -7,7 +7,7 @@ interface EmailTemplateProps {
 export function SendVerificationEmail({ url }: EmailTemplateProps) {
   return (
     <div>
-      <h1>Click the link to verify your email: ${url}</h1>
+      <div>Click the link to verify your email: ${url}</div>
     </div>
   );
 }
